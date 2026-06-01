@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+
+# Datasets
+dataset/
+raw_dataset/
+temp_dataset/
+
+# ZIP files
+*.zip
+
+# Trained models
+*.pth
+*.pt
+
+# Streamlit cache
+.streamlit/
