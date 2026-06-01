@@ -240,6 +240,95 @@ def license_check(extracted_text):
 
     return score
 
+def aadhaar_check(
+        extracted_text,
+        aadhaar_logo_found
+):
+
+    score = 0
+
+    aadhaar_keywords = [
+        "uidai",
+        "government of india",
+        "aadhaar"
+    ]
+
+    aadhaar_keyword_score = 0
+
+    for keyword in aadhaar_keywords:
+        if keyword in extracted_text:
+            aadhaar_keyword_score += 1
+
+    score += (
+        aadhaar_keyword_score
+    )
+
+    # Aadhaar number
+    aadhaar_match = re.search(
+        r'\d{4}\s?\d{4}\s?\d{4}',
+        extracted_text
+    )
+
+    # Number alone counts
+    if aadhaar_match:
+        score += 5
+
+    # Logo bonus
+    if aadhaar_logo_found:
+        score += 3
+
+    # OCR tolerance
+    aadhaar_noise_words = [
+        "male",
+        "female",
+        "dob",
+        "year of birth"
+    ]
+
+    for word in aadhaar_noise_words:
+        if word in extracted_text:
+            score += 1
+
+    return score
+def pan_check(
+        extracted_text,
+        emblem_found
+):
+
+    score = 0
+
+    pan_keywords = [
+        "income tax",
+        "permanent account number",
+        "income tax department"
+    ]
+
+    pan_keyword_score = 0
+
+    for keyword in pan_keywords:
+        if keyword in extracted_text:
+            pan_keyword_score += 1
+
+    score += (
+        pan_keyword_score * 2
+    )
+
+    pan_match = re.search(
+        r'[A-Z]{5}[0-9]{4}[A-Z]',
+        extracted_text.upper()
+    )
+
+    if pan_match:
+        score += 6
+
+    # keep existing logic
+    if emblem_found or (
+        pan_match or
+        pan_keyword_score > 0
+    ):
+        score += 1
+
+    return score
 
 def classify_document(image_path):
 
@@ -271,87 +360,25 @@ def classify_document(image_path):
     )
 
     # ------------------------
-    # Aadhaar OCR checks
+    # Aadhaar Score Calculation
     # ------------------------
 
-    aadhaar_keywords = [
-        "uidai",
-        "government of india",
-        "aadhaar"
-    ]
-
-    aadhaar_keyword_score = 0
-
-    for keyword in aadhaar_keywords:
-        if keyword in extracted_text:
-            aadhaar_keyword_score += 1
-
-    score["aadhaar"] += (
-        aadhaar_keyword_score
+    score["aadhaar"] = (
+        aadhaar_check(
+            extracted_text,
+            aadhaar_logo_found
+        )
     )
-
-    # Aadhaar number
-    aadhaar_match = re.search(
-        r'\d{4}\s?\d{4}\s?\d{4}',
-        extracted_text
-    )
-
-    # IMPORTANT FIX:
-    # Number alone should count
-    if aadhaar_match:
-        score["aadhaar"] += 5
-
-    # Logo bonus
-    if aadhaar_logo_found:
-        score["aadhaar"] += 3
-
-    # OCR tolerance
-    aadhaar_noise_words = [
-        "male",
-        "female",
-        "dob",
-        "year of birth"
-    ]
-
-    for word in aadhaar_noise_words:
-        if word in extracted_text:
-            score["aadhaar"] += 1
-
     # ------------------------
-    # PAN OCR checks
+    # PAN Score Calculation
     # ------------------------
 
-    pan_keywords = [
-        "income tax",
-        "permanent account number",
-        "income tax department"
-    ]
-
-    pan_keyword_score = 0
-
-    for keyword in pan_keywords:
-        if keyword in extracted_text:
-            pan_keyword_score += 1
-
-    score["pan"] += (
-        pan_keyword_score * 2
+    score["pan"] = (
+        pan_check(
+            extracted_text,
+            emblem_found
+        )
     )
-
-    pan_match = re.search(
-        r'[A-Z]{5}[0-9]{4}[A-Z]',
-        extracted_text.upper()
-    )
-
-    if pan_match:
-        score["pan"] += 6
-
-    # keep your logic
-    if emblem_found or (
-        pan_match or
-        pan_keyword_score > 0
-    ):
-        score["pan"] += 1
-
     # ------------------------
     # Passport & License
     # ------------------------
