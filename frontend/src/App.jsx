@@ -5,6 +5,7 @@ function App() {
 
   const [files, setFiles] = useState([]);
   const [message, setMessage] = useState("");
+  const [results, setResults] = useState([]);
 
   const handleFolderChange = (e) => {
 
@@ -15,17 +16,39 @@ function App() {
     setFiles(selectedFiles);
   };
 
-  const testBackend = async () => {
+  const classifyDocuments = async () => {
 
     try {
 
+      const formData = new FormData();
+
+      files.forEach((file) => {
+
+        formData.append(
+          "files",
+          file
+        );
+
+      });
+
       const response =
-        await axios.get(
-          "http://127.0.0.1:8000/"
+        await axios.post(
+          "http://127.0.0.1:8000/classify",
+          formData,
+          {
+            headers: {
+              "Content-Type":
+                "multipart/form-data"
+            }
+          }
         );
 
       setMessage(
-        response.data.message
+      `Successfully classified ${response.data.length} files`
+    );
+
+      setResults(
+        response.data
       );
 
     } catch (error) {
@@ -33,7 +56,7 @@ function App() {
       console.error(error);
 
       setMessage(
-        "Backend Connection Failed"
+        "Classification Failed"
       );
     }
   };
@@ -69,25 +92,73 @@ function App() {
       </h3>
 
       <button
-        onClick={testBackend}
+        onClick={classifyDocuments}
         style={{
           padding: "10px 20px",
           cursor: "pointer"
         }}
       >
-        Test Backend
+        Classify Documents
       </button>
+
+      <br />
+      <br />
 
       <p>
         {message}
       </p>
+
+      {results.length > 0 && (
+        <>
+          <h2>
+            Files Received By Backend
+          </h2>
+
+          <table
+            border="1"
+            cellPadding="8"
+            style={{
+              borderCollapse: "collapse"
+            }}
+          >
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Filename</th>
+                <th>Prediction</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {results.map(
+                (file, index) => (
+                  <tr key={index}>
+                    <td>
+                      {index + 1}
+                    </td>
+
+                    <td>{file.filename}</td>
+                    <td>{file.prediction}</td>
+                    <td>{file.confidence}%</td>
+                  </tr>
+                )
+              )}
+
+            </tbody>
+          </table>
+        </>
+      )}
 
       <br />
       <br />
 
       {files.length > 0 && (
         <>
-          <h2>Selected Files</h2>
+          <h2>
+            Selected Files
+          </h2>
 
           <table
             border="1"
@@ -104,18 +175,26 @@ function App() {
             </thead>
 
             <tbody>
+
               {files.map(
                 (file, index) => (
                   <tr key={index}>
-                    <td>{index + 1}</td>
-                    <td>{file.name}</td>
+                    <td>
+                      {index + 1}
+                    </td>
+
+                    <td>
+                      {file.name}
+                    </td>
                   </tr>
                 )
               )}
+
             </tbody>
           </table>
         </>
       )}
+
     </div>
   );
 }

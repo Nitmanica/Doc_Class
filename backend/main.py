@@ -1,6 +1,11 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
+from PIL import Image
+import io
+
+from model import predict_pil
+
 app = FastAPI()
 
 app.add_middleware(
@@ -13,19 +18,43 @@ app.add_middleware(
 
 @app.get("/")
 def home():
+
     return {
-        "message": "Document Classifier API Running"
+        "message":
+        "Document Classifier API Running"
     }
+
 
 @app.post("/classify")
 async def classify(
     files: list[UploadFile] = File(...)
 ):
 
-    return {
-        "total_files": len(files),
-        "filenames": [
-            file.filename
-            for file in files
-        ]
-    }
+    results = []
+
+    for file in files:
+
+        contents = await file.read()
+
+        image = Image.open(
+            io.BytesIO(contents)
+        ).convert("RGB")
+
+        prediction, confidence = (
+            predict_pil(image)
+        )
+
+        results.append({
+
+            "filename":
+            file.filename,
+
+            "prediction":
+            prediction,
+
+            "confidence":
+            confidence
+
+        })
+
+    return results
