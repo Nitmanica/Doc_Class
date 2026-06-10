@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from PIL import Image
 import io
+import os
 
 from model import predict_pil
 
@@ -47,7 +48,7 @@ async def classify(
         results.append({
 
             "filename":
-            file.filename,
+            os.path.basename(file.filename),
 
             "prediction":
             prediction,
