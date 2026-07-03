@@ -4,21 +4,21 @@ import json
 
 from PIL import Image
 from torchvision import transforms
-from torchvision.models import efficientnet_b0
+from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available()
     else "cpu"
 )
 
-with open(
-    "classes.json",
-    "r"
-) as f:
+CONFIDENCE_THRESHOLD = 80
 
+with open("classes.json", "r") as f:
     classes = json.load(f)
 
-model = efficientnet_b0()
+model = efficientnet_b0(
+    weights=EfficientNet_B0_Weights.DEFAULT
+)
 
 model.classifier[1] = torch.nn.Linear(
     model.classifier[1].in_features,
@@ -27,7 +27,7 @@ model.classifier[1] = torch.nn.Linear(
 
 model.load_state_dict(
     torch.load(
-        "best_document_classifier.pth",
+        "best_document_classifier_v2.pth",
         map_location=DEVICE
     )
 )
